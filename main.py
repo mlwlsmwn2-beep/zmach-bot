@@ -1,4 +1,6 @@
 import os
+import threading
+from http.server import HTTPServer, BaseHTTPRequestHandler
 import telebot
 from telebot import types
 
@@ -209,6 +211,21 @@ def forward_to_admin(message):
     bot.forward_message(ADMIN_CHAT_ID, message.chat.id, message.message_id)
     bot.send_message(message.chat.id, "ההודעה נשלחה לנציג, נחזור אליכם בהקדם 🙂")
 
+
+class HealthHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b"OK")
+
+
+def run_health_server():
+    port = int(os.environ.get("PORT", 10000))
+    server = HTTPServer(("0.0.0.0", port), HealthHandler)
+    server.serve_forever()
+
+
+threading.Thread(target=run_health_server, daemon=True).start()
 
 print("הבוט פעיל ומאזין...")
 bot.infinity_polling()
